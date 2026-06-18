@@ -15,11 +15,19 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  // 切换图片时滚动回顶部
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [currentIndex]);
 
   const goTo = useCallback((index: number) => {
     if (index >= 0 && index < images.length) setCurrentIndex(index);
@@ -37,7 +45,8 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
     if (!isDragging) return;
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
-    if (Math.abs(dx) > Math.abs(dy)) {
+    // 只有明显横向滑动才拦截，避免影响上下滚动
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
       e.preventDefault();
       setTranslateX(dx);
     }
@@ -51,7 +60,10 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
       if (dx < 0 && currentIndex < images.length - 1) goTo(currentIndex + 1);
       else if (dx > 0 && currentIndex > 0) goTo(currentIndex - 1);
       else { setTranslateX(0); setIsDragging(false); }
-    } else { setTranslateX(0); setIsDragging(false); }
+    } else {
+      setTranslateX(0);
+      setIsDragging(false);
+    }
   };
 
   useEffect(() => {
@@ -69,13 +81,13 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col select-none">
       {/* 顶部栏 */}
-      <div className="flex items-center justify-between px-4 py-3 z-10 bg-black/60">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-black/80 backdrop-blur-sm">
         <span className="text-white text-sm font-medium truncate max-w-[200px]">{current.title}</span>
         <div className="flex items-center gap-4">
           <span className="text-white/60 text-sm">{currentIndex + 1} / {images.length}</span>
           <button
             onClick={onClose}
-            className="text-white w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
+            className="text-white w-8 h-8 flex items-center justify-center rounded-full bg-white/10 active:bg-white/30 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -84,47 +96,35 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
         </div>
       </div>
 
-      {/* 图片区域 */}
+      {/* 图片滚动区域 */}
       <div
-        className="flex-1 relative overflow-hidden"
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto overflow-x-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateX(${translateX}px)`,
+          transition: isDragging && Math.abs(translateX) > 0 ? "none" : "transform 0.25s ease",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            transform: `translateX(${translateX}px)`,
-            transition: isDragging && Math.abs(translateX) > 0 ? "none" : "transform 0.25s ease",
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            key={current.id}
-            src={current.src}
-            alt={current.title}
-            className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: "calc(100vh - 100px)" }}
-          />
-        </div>
-
-        {currentIndex > 0 && (
-          <button onClick={() => goTo(currentIndex - 1)} className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-black/40 text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-        )}
-        {currentIndex < images.length - 1 && (
-          <button onClick={() => goTo(currentIndex + 1)} className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-black/40 text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-          </button>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          key={current.id}
+          src={current.src}
+          alt={current.title}
+          className="w-full h-auto block"
+        />
       </div>
 
       {/* 底部点指示器 */}
       {images.length > 1 && (
-        <div className="flex justify-center gap-1.5 py-3 bg-black/60">
+        <div className="flex-shrink-0 flex justify-center gap-1.5 py-3 bg-black/80 backdrop-blur-sm">
           {images.map((_, i) => (
-            <button key={i} onClick={() => goTo(i)}
+            <button
+              key={i}
+              onClick={() => goTo(i)}
               className={`h-1.5 rounded-full transition-all ${i === currentIndex ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
             />
           ))}
