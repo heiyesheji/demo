@@ -21,7 +21,6 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    // 3秒后自动隐藏UI
     hideTimer.current = setTimeout(() => setShowUI(false), 3000);
     return () => {
       document.body.style.overflow = "";
@@ -29,7 +28,6 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
     };
   }, []);
 
-  // 切换图片时滚回顶部
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [currentIndex]);
@@ -77,7 +75,6 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
     }
   };
 
-  // 点击切换 UI 显示/隐藏
   const handleTap = () => {
     if (showUI) {
       setShowUI(false);
@@ -101,24 +98,16 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
-      {/* 顶部浮层（点击后临时出现） */}
-      <div
-        className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+      {/* 右上角关闭按钮 */}
+      <button
+        onClick={onClose}
+        className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-white transition-opacity duration-300"
         style={{ opacity: showUI ? 1 : 0, pointerEvents: showUI ? "auto" : "none" }}
       >
-        <span className="text-white text-sm font-medium truncate max-w-[200px]">{current.title}</span>
-        <div className="flex items-center gap-4">
-          <span className="text-white/70 text-sm">{currentIndex + 1} / {images.length}</span>
-          <button
-            onClick={onClose}
-            className="text-white w-8 h-8 flex items-center justify-center rounded-full bg-white/20 active:bg-white/40"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-      </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
 
       {/* 图片区域 */}
       <div
@@ -144,7 +133,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
         />
       </div>
 
-      {/* 底部浮层指示点 */}
+      {/* 底部指示点 */}
       {images.length > 1 && (
         <div
           className="absolute bottom-4 left-0 right-0 z-10 flex justify-center gap-1.5 transition-opacity duration-300"
@@ -154,7 +143,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
             <button
               key={i}
               onClick={(e) => { e.stopPropagation(); goTo(i); }}
-              className={`h-1.5 rounded-full transition-all ${i === currentIndex ? "bg-white w-4 shadow-md" : "bg-white/50 w-1.5"}`}
+              className={`h-1.5 rounded-full transition-all ${i === currentIndex ? "bg-black/60 w-4" : "bg-black/25 w-1.5"}`}
             />
           ))}
         </div>
