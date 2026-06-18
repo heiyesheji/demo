@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import ImageViewer from "./ImageViewer";
 import { ImageItem } from "@/data/modules";
 
@@ -22,13 +21,11 @@ export default function ThumbnailGrid({ images }: ThumbnailGridProps) {
             className="relative rounded-xl overflow-hidden bg-gray-100 active:scale-95 transition-transform duration-150 text-left"
           >
             <div className="relative aspect-[9/16] w-full">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={img.src}
                 alt={img.title}
-                fill
-                className="object-cover"
-                sizes="50vw"
-                unoptimized
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
             <div className="px-2 py-1.5">
